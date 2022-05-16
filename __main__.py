@@ -20,9 +20,11 @@ class Tracker(object):
         self.fetcher = ArweaveFetcher(tags=tags, tags_transformer=transformer)
 
     def start_tracking(self):
-        logger.debug("Starting tracking")
-        txs = self.fetcher.fetch_transactions(None, None, 10)
-        logger.debug(f"Fetched {len(txs)} transactions: {txs}")
+        txs, has_next, cursor = self.fetcher.fetch_transactions(
+            cursor=self.fetcher.last_cursor, min_block=None, limit=10
+        )
+        self.fetcher.last_cursor = cursor
+        logger.debug(f"Fetched {len(txs)} transactions")
 
 
 if __name__ == "__main__":
