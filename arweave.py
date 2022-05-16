@@ -19,12 +19,15 @@ class ArweaveFetcher(object):
         tags: list[dict[str, Union[str, list[str]]]],
         url="https://arweave.net",
         timeout=30,
+        # mapping tags
+        tags_transformer=None,
     ):
         transport = AIOHTTPTransport(url=url + "/graphql", timeout=timeout)
         self.client = Client(transport=transport, execute_timeout=timeout)
         self.url = url
         self.timeout = timeout
         self.tags = tags
+        self.tags_transformer = tags_transformer
 
     def execute(self, query: str, variables: dict = None) -> dict:
         result = self.client.execute(gql(query), variable_values=variables)
@@ -107,13 +110,17 @@ query($cursor: String, $min_block: Int, $tags: [TagFilter!]!, $limit: Int!) {
         next_cursor = edges[-1]["cursor"] if len(edges) > 0 else None
         return [self.edge_to_transaction(e) for e in edges], has_next_page, next_cursor
 
-    @staticmethod
-    def edge_to_transaction(e: dict) -> dict:
+    def edge_to_transaction(self, e: dict) -> dict:
         n = e["node"]
         result = {
             "id": n["id"],
-            "tags": json.dumps(n["tags"]),
             "block_height": n["block"]["height"],
             "block_timestamp": n["block"]["timestamp"],
         }
+        if t := self.tags_transformer:
+            converted = t(n["tags"])
+            for k, v in converted.items():
+                result[k] = v
+        else:
+            result["tags"] = json.dumps(n["tags"])
         return result
