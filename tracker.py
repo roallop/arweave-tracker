@@ -15,11 +15,12 @@ class Tracker(object):
         self.fetcher = ArweaveFetcher(tags=tags, tags_transformer=transformer)
 
     def start_tracking(
-        self,
-        min_block: int = None,
-        batch_size: int = 100,
-        keep_tracking: bool = False,
-        keep_recent_count: int = None,
+            self,
+            min_block: int = None,
+            batch_size: int = 100,
+            keep_tracking: bool = False,
+            keep_recent_count: int = None,
+            generate_feed: bool = True,
     ):
         logger.info(
             f"Starting tracking from block {min_block}, limit: {batch_size}, keep_tracking: {keep_tracking}"
@@ -30,6 +31,9 @@ class Tracker(object):
 
         if keep_recent_count:
             self.truncate(line_count=keep_recent_count)
+
+        if generate_feed:
+            self.generate_feed()
 
     def _run_once(self, min_block: int, limit: int):
         txs, has_next, cursor = self.fetcher.fetch_transactions(
@@ -85,3 +89,15 @@ class Tracker(object):
                     # post is not ordered in same block, so we simply check every post
                     # start_time = None
                 f.write(line)
+
+    def generate_feed(self):
+        from feed import generate_feed, feed_filename
+
+        with open(self.posts_path, "r") as f:
+            posts = [json.loads(line) for line in f.readlines()]
+            posts = filter(lambda p: "error" not in p, posts)
+            feed = generate_feed(posts)
+
+        with open(feed_filename, "w") as f:
+            feed.write(f, "utf-8")
+

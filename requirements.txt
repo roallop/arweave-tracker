@@ -2,3 +2,5 @@ aiohttp~=3.7.4.post0
 gql~=3.2.0
 pandas~=1.4.2
 fire~=0.4.0
+feedgenerator~=2.0.0
+django-jsonfeed~=0.3.1
