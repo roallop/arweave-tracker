@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import markdown
 from jsonfeed import JSONFeed
 
 from util import logger
@@ -32,7 +33,7 @@ def _entry_to_feed_item(p: dict) -> dict:
         "title": p["title"],
         "link": f"https://mirror.xyz/{contributor}/{digest}",
         "unique_id": f"arweave://{_id}",
-        "description": p["body"],
+        "description": markdown.markdown(p["body"]),
         "author_name": contributor,
         "author_link": f"https://mirror.xyz/{contributor}",
         "pubdate": datetime.fromtimestamp(int(p["timestamp"])),
