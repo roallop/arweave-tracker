@@ -12,6 +12,7 @@ class Tracker(object):
     transactions_path = "transactions.jsonl"
     posts_path = "posts.jsonl"
     history_folder = "history"
+    metrics_path = os.path.join(history_folder, "metrics.json")
 
     def __init__(self, tags: list[dict[str, Union[str, list[str]]]], transformer):
         self.fetcher = ArweaveFetcher(tags=tags, tags_transformer=transformer)
@@ -115,5 +116,32 @@ class Tracker(object):
                 f.write(s + "\n")
                 hf.write(s + "\n")
 
+    # TODO: history metric per day
     def generate_metric(self):
-        pass
+        with open(os.path.join(self.history_folder, self.posts_path), "r") as f:
+            all_posts = [json.loads(line) for line in f.readlines()]
+        logger.info(f"Generating metric from {len(all_posts)} history posts")
+        import pandas as pd
+
+        time_time = time.time()
+        one_day = time_time - 24 * 3600
+        posts_24h = [p for p in all_posts if int(p["timestamp"]) > one_day]
+        logger.info(f"Generating 24h metric from {len(posts_24h)} history posts")
+
+        df = pd.DataFrame(posts_24h)
+        post_count = len(df)
+        user_count = df["contributor"].nunique()
+        title_count = df["title"].nunique()
+        body_count = df["body"].nunique()
+
+        metrics = {
+            "day1": {
+                "post": post_count,
+                "user": user_count,
+                "title": title_count,
+                "body": body_count,
+            }
+        }
+
+        with open(self.metrics_path, "w") as f:
+            f.write(json.dumps(metrics, ensure_ascii=False))
