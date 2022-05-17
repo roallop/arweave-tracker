@@ -19,7 +19,7 @@ jobs:
           ref: deploy
       - uses: actions/setup-python@v3
       - run: pip install -r requirements.txt
-      - run: python . start_tracking --batch_size=100 --keep_tracking
+      - run: python . start_tracking --batch_size 10
       - name: Check Git Status
         id: status
         run: '[[ -z $(git status -s) ]] || echo "::set-output name=status::changed"'
