@@ -1,9 +1,5 @@
 import asyncio
-import os
 from typing import Union
-
-import aiohttp
-import pandas as pd
 
 from util import logger, append_to_file
 from arweave import ArweaveFetcher

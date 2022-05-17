@@ -6,9 +6,8 @@ on:
     branches:
       - deploy
   workflow_dispatch:
-# TODO: uncomment when ready
-#  schedule:
-#    - cron:  '15 * * * *' # every hour at 15 min
+  schedule:
+    - cron:  '*/30 * * * *' # every 30min
 
 jobs:
   arweave-tracking:
@@ -19,7 +18,7 @@ jobs:
           ref: deploy
       - uses: actions/setup-python@v3
       - run: pip install -r requirements.txt
-      - run: python . start_tracking --batch_size 10
+      - run: python . start_tracking --keep_tracking
       - name: Check Git Status
         id: status
         run: '[[ -z $(git status -s) ]] || echo "::set-output name=status::changed"'
