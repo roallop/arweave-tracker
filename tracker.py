@@ -1,18 +1,21 @@
 import asyncio
 import json
+import os
 import time
 from typing import Union
 
-from util import logger, append_to_file
+from util import logger
 from arweave import ArweaveFetcher
 
 
 class Tracker(object):
     transactions_path = "transactions.jsonl"
     posts_path = "posts.jsonl"
+    history_folder = "history"
 
     def __init__(self, tags: list[dict[str, Union[str, list[str]]]], transformer):
         self.fetcher = ArweaveFetcher(tags=tags, tags_transformer=transformer)
+        os.makedirs(self.history_folder, exist_ok=True)
 
     def start_tracking(
             self,
@@ -52,8 +55,8 @@ class Tracker(object):
 
         # save after success
         self.fetcher.last_cursor = cursor
-        append_to_file(self.transactions_path, txs)
-        append_to_file(self.posts_path, posts)
+        self.append_to_file(self.transactions_path, txs)
+        self.append_to_file(self.posts_path, posts)
 
         return has_next
 
@@ -100,6 +103,15 @@ class Tracker(object):
 
         with open(feed_filename, "w") as f:
             feed.write(f, "utf-8")
+
+    # json lines
+    # append to current files and history files
+    def append_to_file(self, path: str, dicts: list[dict]):
+        with open(path, "a") as f, open(os.path.join(self.history_folder, path), "r") as hf:
+            for d in dicts:
+                s = json.dumps(d, ensure_ascii=False)
+                f.write(s + "\n")
+                hf.write(s + "\n")
 
     def generate_metric(self):
         pass

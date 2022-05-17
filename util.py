@@ -29,10 +29,3 @@ async def batch_get(
             tasks.append(asyncio.ensure_future(get(session, url, timeout=timeout)))
         results = await asyncio.gather(*tasks, return_exceptions=return_exceptions)
         return results
-
-
-# json lines
-def append_to_file(path: str, dicts: list[dict]):
-    with open(path, "a") as f:
-        for d in dicts:
-            f.write(json.dumps(d, ensure_ascii=False) + "\n")
