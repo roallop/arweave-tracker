@@ -33,27 +33,12 @@ class Tracker(object):
 
         logger.debug(f"Fetched {len(txs)} transactions")
         ids = [tx["id"] for tx in txs]
-        results = asyncio.run(self.fetcher.batch_fetch_data(ids))
-        logger.debug(f"Fetched {len(results)} posts")
+        posts = asyncio.run(self.fetcher.batch_fetch_data(ids))
+        logger.debug(f"Fetched {len(posts)} posts")
 
         # save after success
         self.fetcher.last_cursor = cursor
-        self._save_transactions(txs)
-        self._save_posts_results(ids, results)
+        append_to_file(self.transactions_path, txs)
+        append_to_file(self.posts_path, posts)
 
         return has_next
-
-    def _save_transactions(self, txs: list[dict]):
-        append_to_file(self.transactions_path, txs)
-
-    def _save_posts_results(
-        self, ids: [str], posts: list[Union[dict, aiohttp.ClientResponseError]]
-    ):
-        final_posts = []
-        for _id, post in zip(ids, posts):
-            if isinstance(post, dict):
-                final_posts.append(post)
-            else:
-                logger.warn(f"Error fetching post {_id}: {post}")
-                final_posts.append({"id": _id, "error": post})
-        append_to_file(self.posts_path, final_posts)

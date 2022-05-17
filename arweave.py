@@ -124,13 +124,19 @@ query($cursor: String, $min_block: Int, $tags: [TagFilter!]!, $limit: Int!) {
             result["tags"] = json.dumps(n["tags"])
         return result
 
-    async def batch_fetch_data(self, _ids: List[str]):
+    async def batch_fetch_data(self, _ids: List[str]) -> [dict]:
         if len(_ids) == 0:
             return []
 
         urls = [self.url + "/" + _id for _id in _ids]
 
-        def resp_post_to_db_post(_id: str, post: dict) -> dict:
+        def resp_post_to_db_post(_id: str, post) -> dict:
+            if not isinstance(post, dict):
+                logger.warn(f"[{_id}] error: {post}")
+                if isinstance(post, aiohttp.ClientResponseError):
+                    return {"id": _id, "error": {"status": post.status, "message": post.message}}
+                return {"id": _id, "error": {"message": f"unknown error: {post}"}}
+
             content = post["content"]
             dbpost = {
                 "id": _id,
