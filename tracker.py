@@ -39,7 +39,9 @@ class Tracker(object):
             header=not os.path.exists(self.transactions_path),
         )
 
-    def _save_posts_results(self, ids: [str], posts: list[Union[dict, aiohttp.ClientResponseError]]):
+    def _save_posts_results(
+        self, ids: [str], posts: list[Union[dict, aiohttp.ClientResponseError]]
+    ):
         final_posts = []
         for _id, post in zip(ids, posts):
             if isinstance(post, dict):
@@ -50,4 +52,3 @@ class Tracker(object):
                 else:
                     logger.warn(f"Error fetching post {_id}: {post}")
         append_csv(self.posts_path, final_posts)
-

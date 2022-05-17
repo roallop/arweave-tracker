@@ -124,7 +124,7 @@ query($cursor: String, $min_block: Int, $tags: [TagFilter!]!, $limit: Int!) {
             result["tags"] = json.dumps(n["tags"])
         return result
 
-    async def batch_fetch_data(self, _ids: List[str]) -> List[Union[dict, aiohttp.ClientResponseError]]:
+    async def batch_fetch_data(self, _ids: List[str]):
         if len(_ids) == 0:
             return []
 
@@ -132,4 +132,3 @@ query($cursor: String, $min_block: Int, $tags: [TagFilter!]!, $limit: Int!) {
         results = await batch_get(urls, timeout=self.timeout, return_exceptions=True)
         logger.debug(f"batch_fetch_data results: {results}")
         return results
-
