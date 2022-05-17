@@ -39,6 +39,8 @@ class Tracker(object):
         if generate_feed:
             self.generate_feed()
 
+        self.generate_metric()
+
     def _run_once(self, min_block: int, limit: int):
         txs, has_next, cursor = self.fetcher.fetch_transactions(
             cursor=self.fetcher.last_cursor, min_block=min_block, limit=limit
