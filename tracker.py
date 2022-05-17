@@ -101,3 +101,7 @@ class Tracker(object):
         with open(feed_filename, "w") as f:
             feed.write(f, "utf-8")
 
+    def generate_metric(self):
+        pass
+
+
