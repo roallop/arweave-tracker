@@ -129,6 +129,22 @@ query($cursor: String, $min_block: Int, $tags: [TagFilter!]!, $limit: Int!) {
             return []
 
         urls = [self.url + "/" + _id for _id in _ids]
+
+        def resp_post_to_db_post(_id: str, post: dict) -> dict:
+            content = post["content"]
+            dbpost = {
+                "id": _id,
+                "title": content["title"],
+                "body": content["body"],
+                "timestamp": content["timestamp"],
+                "digest": post["digest"],
+                "contributor": post["authorship"]["contributor"],
+            }
+            if nft := post["nft"]:
+                if len(nft) > 0:
+                    dbpost["nft"] = json.dumps(nft)
+            return dbpost
+
         results = await batch_get(urls, timeout=self.timeout, return_exceptions=True)
-        logger.debug(f"batch_fetch_data results: {results}")
-        return results
+        return [resp_post_to_db_post(_id, post) for _id, post in zip(_ids, results)]
+
