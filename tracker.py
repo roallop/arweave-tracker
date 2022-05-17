@@ -5,13 +5,13 @@ from typing import Union
 import aiohttp
 import pandas as pd
 
-from util import logger, append_csv
+from util import logger, append_to_file
 from arweave import ArweaveFetcher
 
 
 class Tracker(object):
-    transactions_path = "transactions.csv"
-    posts_path = "posts.csv"
+    transactions_path = "transactions.jsonl"
+    posts_path = "posts.jsonl"
 
     def __init__(self, tags: list[dict[str, Union[str, list[str]]]], transformer):
         self.fetcher = ArweaveFetcher(tags=tags, tags_transformer=transformer)
@@ -32,12 +32,7 @@ class Tracker(object):
         self._save_posts_results(ids, results)
 
     def _save_transactions(self, txs: list[dict]):
-        pd.DataFrame(txs).to_csv(
-            self.transactions_path,
-            mode="a",
-            index=False,
-            header=not os.path.exists(self.transactions_path),
-        )
+        append_to_file(self.transactions_path, txs)
 
     def _save_posts_results(
         self, ids: [str], posts: list[Union[dict, aiohttp.ClientResponseError]]
@@ -47,8 +42,6 @@ class Tracker(object):
             if isinstance(post, dict):
                 final_posts.append(post)
             else:
-                if post.status == 404:
-                    final_posts.append({"id": _id, "error": "Not found"})
-                else:
-                    logger.warn(f"Error fetching post {_id}: {post}")
-        append_csv(self.posts_path, final_posts)
+                logger.warn(f"Error fetching post {_id}: {post}")
+                final_posts.append({"id": _id, "error": post})
+        append_to_file(self.posts_path, final_posts)

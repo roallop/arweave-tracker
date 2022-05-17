@@ -1,10 +1,10 @@
 import asyncio
+import json
 import logging
 import os
 from typing import Union, Any
 
 import aiohttp
-import pandas as pd
 
 logging.basicConfig(
     level=os.environ.get("LOGLEVEL", logging.INFO),
@@ -31,10 +31,8 @@ async def batch_get(
         return results
 
 
-def append_csv(path: str, dicts: list[dict]):
-    pd.DataFrame(dicts).to_csv(
-        path,
-        mode="a",
-        index=False,
-        header=not os.path.exists(path),
-    )
+# json lines
+def append_to_file(path: str, dicts: list[dict]):
+    with open(path, "a") as f:
+        for d in dicts:
+            f.write(json.dumps(d, ensure_ascii=False) + "\n")
