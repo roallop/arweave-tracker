@@ -15,7 +15,11 @@ class Tracker(object):
         self.fetcher = ArweaveFetcher(tags=tags, tags_transformer=transformer)
 
     def start_tracking(
-            self, min_block: int = None, batch_size: int = 100, keep_tracking: bool = False, keep_recent_count: int = None
+        self,
+        min_block: int = None,
+        batch_size: int = 100,
+        keep_tracking: bool = False,
+        keep_recent_count: int = None,
     ):
         logger.info(
             f"Starting tracking from block {min_block}, limit: {batch_size}, keep_tracking: {keep_tracking}"
@@ -32,7 +36,9 @@ class Tracker(object):
             cursor=self.fetcher.last_cursor, min_block=min_block, limit=limit
         )
 
-        logger.info(f"Fetched {len(txs)} transactions, has_next: {has_next}, cursor: {cursor}")
+        logger.info(
+            f"Fetched {len(txs)} transactions, has_next: {has_next}, cursor: {cursor}"
+        )
         if len(txs) == 0:
             return False
 
@@ -56,7 +62,9 @@ class Tracker(object):
         if interval is None and line_count is None:
             return
 
-        logger.info(f"Truncating {path} with interval: {interval}, line_count: {line_count}")
+        logger.info(
+            f"Truncating {path} with interval: {interval}, line_count: {line_count}"
+        )
 
         with open(path, "r") as f:
             lines = f.readlines()
