@@ -147,4 +147,3 @@ query($cursor: String, $min_block: Int, $tags: [TagFilter!]!, $limit: Int!) {
 
         results = await batch_get(urls, timeout=self.timeout, return_exceptions=True)
         return [resp_post_to_db_post(_id, post) for _id, post in zip(_ids, results)]
-
