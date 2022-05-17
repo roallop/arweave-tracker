@@ -1,14 +1,13 @@
+import asyncio
 import json
 import pickle
-import sqlite3
 from typing import Optional, List, Union
 
-import pandas as pd
-import requests
+import aiohttp
 from gql import gql, Client
 from gql.transport.aiohttp import AIOHTTPTransport
 
-from util import logger
+from util import logger, batch_get
 
 
 class ArweaveFetcher(object):
@@ -124,3 +123,13 @@ query($cursor: String, $min_block: Int, $tags: [TagFilter!]!, $limit: Int!) {
         else:
             result["tags"] = json.dumps(n["tags"])
         return result
+
+    async def batch_fetch_data(self, _ids: List[str]) -> List[Union[dict, aiohttp.ClientResponseError]]:
+        if len(_ids) == 0:
+            return []
+
+        urls = [self.url + "/" + _id for _id in _ids]
+        results = await batch_get(urls, timeout=self.timeout, return_exceptions=True)
+        logger.debug(f"batch_fetch_data results: {results}")
+        return results
+
