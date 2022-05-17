@@ -17,12 +17,12 @@ class Tracker(object):
         self.fetcher = ArweaveFetcher(tags=tags, tags_transformer=transformer)
 
     def start_tracking(
-        self, min_block: int = None, limit: int = 100, keep_tracking: bool = False
+        self, min_block: int = None, batch_size: int = 100, keep_tracking: bool = False
     ):
         logger.info(
-            f"Starting tracking from block {min_block}, limit: {limit}, keep_tracking: {keep_tracking}"
+            f"Starting tracking from block {min_block}, limit: {batch_size}, keep_tracking: {keep_tracking}"
         )
-        while self._run_once(min_block, limit):
+        while self._run_once(min_block, batch_size):
             if not keep_tracking:
                 break
 
