@@ -17,7 +17,10 @@ def generate_feed(posts: [dict]) -> JSONFeed:
         author_link="https://github.com/RoCry",
     )
     for p in posts:
-        feed.add_item(**_entry_to_feed_item(p))
+        try:
+            feed.add_item(**_entry_to_feed_item(p))
+        except Exception as e:
+            logger.error(f"Failed to add post to feed: {e}")
     return feed
 
 
@@ -32,8 +35,8 @@ def _entry_to_feed_item(p: dict) -> dict:
         "description": p["body"],
         "author_name": contributor,
         "author_link": f"https://mirror.xyz/{contributor}",
-        "pubdate": datetime.fromtimestamp(p["timestamp"]),
+        "pubdate": datetime.fromtimestamp(int(p["timestamp"])),
     }
 
-    logger.debug(f"item: {item}")
+    # logger.debug(f"item: {item}")
     return item
