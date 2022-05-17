@@ -6,8 +6,8 @@ on:
     branches:
       - deploy
   workflow_dispatch:
-  schedule:
-    - cron:  '*/30 * * * *' # every 30min
+#  schedule:
+#    - cron:  '*/30 * * * *' # every 30min
 
 jobs:
   arweave-tracking:
