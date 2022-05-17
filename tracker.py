@@ -18,12 +18,12 @@ class Tracker(object):
         os.makedirs(self.history_folder, exist_ok=True)
 
     def start_tracking(
-            self,
-            min_block: int = None,
-            batch_size: int = 100,
-            keep_tracking: bool = False,
-            keep_recent_count: int = None,
-            generate_feed: bool = True,
+        self,
+        min_block: int = None,
+        batch_size: int = 100,
+        keep_tracking: bool = False,
+        keep_recent_count: int = None,
+        generate_feed: bool = True,
     ):
         logger.info(
             f"Starting tracking from block {min_block}, limit: {batch_size}, keep_tracking: {keep_tracking}"
@@ -107,7 +107,9 @@ class Tracker(object):
     # json lines
     # append to current files and history files
     def append_to_file(self, path: str, dicts: list[dict]):
-        with open(path, "a") as f, open(os.path.join(self.history_folder, path), "r") as hf:
+        with open(path, "a") as f, open(
+            os.path.join(self.history_folder, path), "a"
+        ) as hf:
             for d in dicts:
                 s = json.dumps(d, ensure_ascii=False)
                 f.write(s + "\n")
@@ -115,5 +117,3 @@ class Tracker(object):
 
     def generate_metric(self):
         pass
-
-
