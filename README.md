@@ -10,6 +10,4 @@ Track the data on arweave with GitHub Action and store it as [JSON Lines](https:
 
 # Pending Features
 
-1. only keep latest data
-    1. by time
-    2. by count
+No pending features.
