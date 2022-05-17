@@ -49,15 +49,15 @@ query {
     @property
     def last_cursor(self) -> Optional[str]:
         try:
-            with open(".last_cursor", "rb") as f:
-                return pickle.load(f)
+            with open(".last_cursor", "r") as f:
+                return f.read().strip()
         except FileNotFoundError:
             return None
 
     @last_cursor.setter
     def last_cursor(self, value: str):
-        with open(".last_cursor", "wb") as f:
-            pickle.dump(value, f)
+        with open(".last_cursor", "w") as f:
+            f.write(value)
 
     def fetch_transactions(
         self, cursor: Optional[str], min_block: Optional[int], limit=100

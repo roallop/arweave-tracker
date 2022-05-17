@@ -27,7 +27,10 @@ class Tracker(object):
             cursor=self.fetcher.last_cursor, min_block=min_block, limit=limit
         )
 
-        logger.debug(f"Fetched {len(txs)} transactions")
+        logger.info(f"Fetched {len(txs)} transactions, has_next: {has_next}, cursor: {cursor}")
+        if len(txs) == 0:
+            return False
+
         ids = [tx["id"] for tx in txs]
         posts = asyncio.run(self.fetcher.batch_fetch_data(ids))
         logger.debug(f"Fetched {len(posts)} posts")
