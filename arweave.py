@@ -1,4 +1,3 @@
-import asyncio
 import json
 import pickle
 from typing import Optional, List, Union
@@ -134,7 +133,10 @@ query($cursor: String, $min_block: Int, $tags: [TagFilter!]!, $limit: Int!) {
             if not isinstance(post, dict):
                 logger.warn(f"[{_id}] error: {post}")
                 if isinstance(post, aiohttp.ClientResponseError):
-                    return {"id": _id, "error": {"status": post.status, "message": post.message}}
+                    return {
+                        "id": _id,
+                        "error": {"status": post.status, "message": post.message},
+                    }
                 return {"id": _id, "error": {"message": f"unknown error: {post}"}}
 
             content = post["content"]
