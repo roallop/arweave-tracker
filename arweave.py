@@ -148,7 +148,7 @@ query($cursor: String, $min_block: Int, $tags: [TagFilter!]!, $limit: Int!) {
                 "digest": post["digest"],
                 "contributor": post["authorship"]["contributor"],
             }
-            if nft := post["nft"]:
+            if nft := post.get("nft"):
                 if len(nft) > 0:
                     dbpost["nft"] = json.dumps(nft)
             return dbpost
