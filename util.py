@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 import os
-from typing import Union, Any
+from typing import Union, Any, Optional
 
 import aiohttp
 
@@ -19,9 +19,9 @@ async def get(session: aiohttp.ClientSession, url: str, timeout: int = 10):
 
 
 async def batch_get(
-    urls: list[str],
-    timeout: int = 10,
-    return_exceptions=False,
+        urls: list[str],
+        timeout: int = 10,
+        return_exceptions=False,
 ) -> tuple[Union[BaseException, Any], ...]:
     async with aiohttp.ClientSession() as session:
         tasks = []
@@ -31,7 +31,9 @@ async def batch_get(
         return results
 
 
-def read_last_line(path: str) -> str:
+def read_last_line(path: str) -> Optional[str]:
+    if not os.path.exists(path):
+        return None
     with open(path, "rb") as file:
         try:
             file.seek(-2, os.SEEK_END)
@@ -40,3 +42,12 @@ def read_last_line(path: str) -> str:
         except OSError:
             file.seek(0)
         return file.readline().decode()
+
+
+def test_read_last_line():
+    assert read_last_line("tests/not_exists_file") is None
+
+    assert read_last_line("tests/line1.txt").strip() == '{"foo": "bar"}'
+    assert json.loads(read_last_line("tests/line1.txt"))["foo"] == "bar"
+    assert read_last_line("tests/line2.txt").strip() == '{"foo": "bar"}'
+    assert json.loads(read_last_line("tests/line2.txt"))["foo"] == "bar"
