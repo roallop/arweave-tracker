@@ -131,7 +131,9 @@ query($cursor: String, $min_block: Int, $tags: [TagFilter!]!, $limit: Int!) {
                 "title": content["title"],
                 "body": content["body"],
                 "timestamp": int(content["timestamp"]),
-                "digest": post["originalDigest"],  # prefer use originalDigest
+                "digest": post.get(
+                    "originalDigest", post["digest"]
+                ),  # prefer use originalDigest
                 "contributor": post["authorship"]["contributor"],
             }
             if nft := post.get("nft"):
