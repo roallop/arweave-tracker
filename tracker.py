@@ -13,7 +13,7 @@ class Tracker(object):
     transactions_path = "transactions.jsonl"
     posts_path = "posts.jsonl"
     history_folder = "history"
-    metrics_path = os.path.join(history_folder, "metrics.json")
+    metrics_path = "metrics.json"
 
     def __init__(self, tags: list[dict[str, Union[str, list[str]]]], transformer):
         self.fetcher = ArweaveFetcher(tags=tags, tags_transformer=transformer)
