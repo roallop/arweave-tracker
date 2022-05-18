@@ -136,9 +136,7 @@ class Tracker(object):
             return
         logger.info(f"Generating metric from {len(all_posts)} history posts")
 
-        last_tx = json.loads(
-            read_last_line(os.path.join(self.history_folder, self.transactions_path))
-        )
+        last_tx = json.loads(read_last_line(self.transactions_path))
 
         metrics = {
             "updated_at": datetime.now(timezone.utc).astimezone().isoformat(),
@@ -146,13 +144,16 @@ class Tracker(object):
             .astimezone()
             .isoformat(),
             "last_block_height": last_tx["block_height"],
+            "last_block_time": datetime.fromtimestamp(last_tx["block_timestamp"])
+            .astimezone()
+            .isoformat(),
         }
 
         if day1 := self.day1_metric(all_posts):
             metrics["day1"] = day1
 
         with open(self.metrics_path, "w") as f:
-            f.write(json.dumps(metrics, ensure_ascii=False))
+            f.write(json.dumps(metrics, ensure_ascii=False, indent=2))
 
     @staticmethod
     def day1_metric(all_posts: list[dict]):
