@@ -6,6 +6,7 @@ import os
 import time
 from typing import Union
 
+from feed import mirror_link_feed_filename
 from util import logger, read_last_jsonline
 from arweave import ArweaveFetcher
 
@@ -128,10 +129,13 @@ class Tracker(object):
         with open(self.posts_path, "r") as f:
             posts = [json.loads(line) for line in f.readlines()]
             posts = filter(lambda p: "error" not in p, posts)
-            feed = generate_feed(posts)
+            feed = generate_feed(posts, False)
+            mirror_feed = generate_feed(posts, True)
 
         with open(feed_filename, "w") as f:
             feed.write(f, "utf-8")
+        with open(mirror_link_feed_filename, "w") as f:
+            mirror_feed.write(f, "utf-8")
 
     # json lines
     # append to current files and history files
