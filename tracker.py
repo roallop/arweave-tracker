@@ -69,7 +69,7 @@ class Tracker(object):
         )
 
         logger.info(
-            f"Fetched {len(txs)} transactions, has_next: {has_next}, cursor: {cursor}"
+            f"Fetched {len(txs)} transactions, has_next: {has_next}, cursor: {cursor}, last_tx: {last_tx}"
         )
         if len(txs) == 0:
             return False
@@ -79,6 +79,7 @@ class Tracker(object):
         if last_tx is not None and self.cursor is None:
             txs = list(itertools.dropwhile(lambda t: t["id"] != last_tx["id"], txs))
             if len(txs) <= 1:
+                logger.info(f"No new transactions, cursor: {cursor}")
                 # all txs are duplicated, try again with new cursor
                 self.cursor = cursor
                 return True
@@ -96,7 +97,7 @@ class Tracker(object):
         for key, txs in group_by_keys_txs.items():
             ids = [tx["id"] for tx in txs]
             posts = asyncio.run(self.fetcher.batch_fetch_data(ids))
-            logger.debug(f"{key} Fetched {len(posts)} posts")
+            logger.info(f"{key} Fetched {len(posts)} posts")
             group_by_keys_posts[key] = posts
 
         # save after success
@@ -158,6 +159,8 @@ class Tracker(object):
     # json lines
     # append to current files and history files
     def append_to_file(self, key: int, path: str, dicts: list[dict]):
+        logger.info(f"{key} Appending {len(dicts)} to {path}")
+
         parts = path.split(".")
         name = ".".join(parts[:-1])
         ext = parts[-1]
