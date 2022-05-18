@@ -1,10 +1,11 @@
 import asyncio
+from datetime import datetime, timezone
 import json
 import os
 import time
 from typing import Union
 
-from util import logger
+from util import logger, read_last_line
 from arweave import ArweaveFetcher
 
 
@@ -130,18 +131,38 @@ class Tracker(object):
     def generate_metric(self):
         with open(os.path.join(self.history_folder, self.posts_path), "r") as f:
             all_posts = [json.loads(line) for line in f.readlines()]
-        logger.info(f"Generating metric from {len(all_posts)} history posts")
         if len(all_posts) == 0:
+            logger.warn("No posts found")
             return
+        logger.info(f"Generating metric from {len(all_posts)} history posts")
 
+        last_tx = json.loads(
+            read_last_line(os.path.join(self.history_folder, self.transactions_path))
+        )
+
+        metrics = {
+            "updated_at": datetime.now(timezone.utc).astimezone().isoformat(),
+            "last_post_time": datetime.fromtimestamp(all_posts[-1]["timestamp"])
+            .astimezone()
+            .isoformat(),
+            "last_block_height": last_tx["block_height"],
+        }
+
+        if day1 := self.day1_metric(all_posts):
+            metrics["day1"] = day1
+
+        with open(self.metrics_path, "w") as f:
+            f.write(json.dumps(metrics, ensure_ascii=False))
+
+    @staticmethod
+    def day1_metric(all_posts: list[dict]):
         import pandas as pd
 
-        time_time = time.time()
-        one_day = time_time - 24 * 3600
+        one_day = time.time() - 24 * 3600
         posts_24h = [p for p in all_posts if int(p["timestamp"]) > one_day]
         logger.info(f"Generating 24h metric from {len(posts_24h)} history posts")
         if len(posts_24h) == 0:
-            return
+            return None
 
         df = pd.DataFrame(posts_24h)
         post_count = len(df)
@@ -149,14 +170,9 @@ class Tracker(object):
         title_count = df["title"].nunique()
         body_count = df["body"].nunique()
 
-        metrics = {
-            "day1": {
-                "post": post_count,
-                "user": user_count,
-                "title": title_count,
-                "body": body_count,
-            }
+        return {
+            "post": post_count,
+            "user": user_count,
+            "title": title_count,
+            "body": body_count,
         }
-
-        with open(self.metrics_path, "w") as f:
-            f.write(json.dumps(metrics, ensure_ascii=False))
