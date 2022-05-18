@@ -73,12 +73,13 @@ class Tracker(object):
             return False
 
         # trim duplicated txs
-        txs = list(itertools.dropwhile(lambda tx: tx["id"] != last_tx["id"], txs))
-        if len(txs) <= 1:
-            # all txs are duplicated, try again with new cursor
-            self.cursor = cursor
-            return True
-        txs = txs[1:]
+        if last_tx:
+            txs = list(itertools.dropwhile(lambda tx: tx["id"] != last_tx["id"], txs))
+            if len(txs) <= 1:
+                # all txs are duplicated, try again with new cursor
+                self.cursor = cursor
+                return True
+            txs = txs[1:]
         ids = [tx["id"] for tx in txs]
         posts = asyncio.run(self.fetcher.batch_fetch_data(ids))
         logger.debug(f"Fetched {len(posts)} posts")
