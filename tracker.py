@@ -10,9 +10,10 @@ from arweave import ArweaveFetcher
 
 
 class Tracker(object):
+    history_folder = "history"
+
     transactions_path = "transactions.jsonl"
     posts_path = "posts.jsonl"
-    history_folder = "history"
     metrics_path = "metrics.json"
 
     def __init__(self, tags: list[dict[str, Union[str, list[str]]]], transformer):
@@ -118,18 +119,18 @@ class Tracker(object):
 
     # json lines
     # append to current files and history files
-    def append_to_file(self, path: str, dicts: list[dict]):
-        with open(path, "a") as f, open(
-            os.path.join(self.history_folder, path), "a"
-        ) as hf:
+    @staticmethod
+    def append_to_file(path: str, dicts: list[dict]):
+        # open(os.path.join(self.history_folder, path), "a") as hf
+        with open(path, "a") as f:
             for d in dicts:
                 s = json.dumps(d, ensure_ascii=False)
                 f.write(s + "\n")
-                hf.write(s + "\n")
+                # hf.write(s + "\n")
 
     # TODO: history metric per day
     def generate_metric(self):
-        with open(os.path.join(self.history_folder, self.posts_path), "r") as f:
+        with open(self.posts_path, "r") as f:
             all_posts = [json.loads(line) for line in f.readlines()]
         if len(all_posts) == 0:
             logger.warn("No posts found")
