@@ -154,6 +154,7 @@ class Tracker(object):
     def generate_metric(self):
         with open(self.posts_path, "r") as f:
             all_posts = [json.loads(line) for line in f.readlines()]
+        all_posts = list(filter(lambda p: "error" not in p, all_posts))
         if len(all_posts) == 0:
             logger.warn("No posts found")
             return
