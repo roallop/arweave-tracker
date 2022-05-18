@@ -19,9 +19,9 @@ async def get(session: aiohttp.ClientSession, url: str, timeout: int = 10):
 
 
 async def batch_get(
-        urls: list[str],
-        timeout: int = 10,
-        return_exceptions=False,
+    urls: list[str],
+    timeout: int = 10,
+    return_exceptions=False,
 ) -> tuple[Union[BaseException, Any], ...]:
     async with aiohttp.ClientSession() as session:
         tasks = []
