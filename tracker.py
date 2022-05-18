@@ -33,8 +33,8 @@ class Tracker(object):
         while self._run_once(min_block, batch_size):
             if not keep_tracking:
                 break
-            if time.time() - start_time > 3600:
-                # commit every hour
+            if time.time() - start_time >= 1200:
+                # commit every 20 min
                 break
 
         if keep_recent_count:
