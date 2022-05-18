@@ -26,11 +26,15 @@ class Tracker(object):
         keep_recent_count: int = None,
         generate_feed: bool = True,
     ):
+        start_time = time.time()
         logger.info(
             f"Starting tracking from block {min_block}, limit: {batch_size}, keep_tracking: {keep_tracking}"
         )
         while self._run_once(min_block, batch_size):
             if not keep_tracking:
+                break
+            if time.time() - start_time > 3600:
+                # commit every hour
                 break
 
         if keep_recent_count:
