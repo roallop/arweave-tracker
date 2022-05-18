@@ -131,12 +131,17 @@ class Tracker(object):
         with open(os.path.join(self.history_folder, self.posts_path), "r") as f:
             all_posts = [json.loads(line) for line in f.readlines()]
         logger.info(f"Generating metric from {len(all_posts)} history posts")
+        if len(all_posts) == 0:
+            return
+
         import pandas as pd
 
         time_time = time.time()
         one_day = time_time - 24 * 3600
         posts_24h = [p for p in all_posts if int(p["timestamp"]) > one_day]
         logger.info(f"Generating 24h metric from {len(posts_24h)} history posts")
+        if len(posts_24h) == 0:
+            return
 
         df = pd.DataFrame(posts_24h)
         post_count = len(df)
