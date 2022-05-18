@@ -6,7 +6,7 @@ import os
 import time
 from typing import Union
 
-from util import logger, read_last_line
+from util import logger, read_last_jsonline
 from arweave import ArweaveFetcher
 
 
@@ -56,7 +56,7 @@ class Tracker(object):
         last_tx = (
             None
             if not os.path.exists(self.transactions_path)
-            else json.loads(read_last_line(self.transactions_path))
+            else read_last_jsonline(self.transactions_path)
         )
 
         min_block = last_tx["block_height"] if last_tx else None
@@ -151,9 +151,12 @@ class Tracker(object):
         if len(all_posts) == 0:
             logger.warn("No posts found")
             return
-        logger.info(f"Generating metric from {len(all_posts)} history posts")
+        last_tx = read_last_jsonline(self.transactions_path)
+        if last_tx is None:
+            logger.warn("No transactions found")
+            return
 
-        last_tx = json.loads(read_last_line(self.transactions_path))
+        logger.info(f"Generating metric from {len(all_posts)} history posts")
 
         metrics = {
             "updated_at": datetime.now(timezone.utc).astimezone().isoformat(),

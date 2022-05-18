@@ -44,6 +44,13 @@ def read_last_line(path: str) -> Optional[str]:
         return file.readline().decode()
 
 
+def read_last_jsonline(path: str) -> Optional[dict]:
+    line = read_last_line(path)
+    if line is None:
+        return None
+    return json.loads(line)
+
+
 def test_read_last_line():
     assert read_last_line("tests/not_exists_file") is None
 
