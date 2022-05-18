@@ -72,9 +72,10 @@ class Tracker(object):
         if len(txs) == 0:
             return False
 
-        # trim duplicated txs
-        if last_tx:
-            txs = list(itertools.dropwhile(lambda tx: tx["id"] != last_tx["id"], txs))
+        # trim duplicated txs when
+        # no cursor -> fetch by block height, which will have duplicated txs
+        if last_tx is not None and self.cursor is None:
+            txs = list(itertools.dropwhile(lambda t: t["id"] != last_tx["id"], txs))
             if len(txs) <= 1:
                 # all txs are duplicated, try again with new cursor
                 self.cursor = cursor
