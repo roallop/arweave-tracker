@@ -43,7 +43,11 @@ class Tracker(object):
         if generate_feed:
             self.generate_feed()
 
-        self.generate_metric()
+        # allow metrics fail
+        try:
+            self.generate_metric()
+        except Exception as e:
+            logger.error(f"Failed to generate metric: {e}")
 
     def _run_once(self, min_block: int, limit: int):
         txs, has_next, cursor = self.fetcher.fetch_transactions(
