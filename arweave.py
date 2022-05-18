@@ -143,7 +143,7 @@ query($cursor: String, $min_block: Int, $tags: [TagFilter!]!, $limit: Int!) {
                 "id": _id,
                 "title": content["title"],
                 "body": content["body"],
-                "timestamp": content["timestamp"],
+                "timestamp": int(content["timestamp"]),
                 "digest": post["digest"],
                 "contributor": post["authorship"]["contributor"],
             }
