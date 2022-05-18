@@ -29,3 +29,14 @@ async def batch_get(
             tasks.append(asyncio.ensure_future(get(session, url, timeout=timeout)))
         results = await asyncio.gather(*tasks, return_exceptions=return_exceptions)
         return results
+
+
+def read_last_line(path: str) -> str:
+    with open(path, "rb") as file:
+        try:
+            file.seek(-2, os.SEEK_END)
+            while file.read(1) != b"\n":
+                file.seek(-2, os.SEEK_CUR)
+        except OSError:
+            file.seek(0)
+        return file.readline().decode()
