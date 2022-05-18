@@ -18,8 +18,14 @@ class Tracker(object):
     posts_path = "posts.jsonl"
     metrics_path = "metrics.json"
 
-    def __init__(self, tags: list[dict[str, Union[str, list[str]]]], transformer):
+    def __init__(
+        self,
+        tags: list[dict[str, Union[str, list[str]]]],
+        transformer,
+        history_batch_size: int = 1000,
+    ):
         self.fetcher = ArweaveFetcher(tags=tags, tags_transformer=transformer)
+        self.history_batch_size = history_batch_size
         os.makedirs(self.history_folder, exist_ok=True)
         self.cursor = None
 
@@ -54,11 +60,7 @@ class Tracker(object):
             logger.error(f"Failed to generate metric: {e}")
 
     def _run_once(self, limit: int):
-        last_tx = (
-            None
-            if not os.path.exists(self.transactions_path)
-            else read_last_jsonline(self.transactions_path)
-        )
+        last_tx = read_last_jsonline(self.transactions_path)
 
         min_block = last_tx["block_height"] if last_tx else None
 
@@ -81,14 +83,28 @@ class Tracker(object):
                 self.cursor = cursor
                 return True
             txs = txs[1:]
-        ids = [tx["id"] for tx in txs]
-        posts = asyncio.run(self.fetcher.batch_fetch_data(ids))
-        logger.debug(f"Fetched {len(posts)} posts")
+
+        group_by_keys_txs = {}
+        for tx in txs:
+            group_by_keys_txs.setdefault(
+                int(tx["block_height"] / self.history_batch_size)
+                * self.history_batch_size,
+                [],
+            ).append(tx)
+
+        group_by_keys_posts = {}
+        for key, txs in group_by_keys_txs.items():
+            ids = [tx["id"] for tx in txs]
+            posts = asyncio.run(self.fetcher.batch_fetch_data(ids))
+            logger.debug(f"{key} Fetched {len(posts)} posts")
+            group_by_keys_posts[key] = posts
 
         # save after success
         self.cursor = cursor
-        self.append_to_file(self.transactions_path, txs)
-        self.append_to_file(self.posts_path, posts)
+        for key, txs in group_by_keys_txs.items():
+            self.append_to_file(key, self.transactions_path, txs)
+        for key, posts in group_by_keys_posts.items():
+            self.append_to_file(key, self.posts_path, posts)
 
         return has_next
 
@@ -141,14 +157,18 @@ class Tracker(object):
 
     # json lines
     # append to current files and history files
-    @staticmethod
-    def append_to_file(path: str, dicts: list[dict]):
-        # open(os.path.join(self.history_folder, path), "a") as hf
-        with open(path, "a") as f:
+    def append_to_file(self, key: int, path: str, dicts: list[dict]):
+        parts = path.split(".")
+        name = ".".join(parts[:-1])
+        ext = parts[-1]
+
+        with open(path, "a") as f, open(
+            os.path.join(self.history_folder, f"{name}_{key:09d}.{ext}"), "a"
+        ) as hf:
             for d in dicts:
                 s = json.dumps(d, ensure_ascii=False)
                 f.write(s + "\n")
-                # hf.write(s + "\n")
+                hf.write(s + "\n")
 
     # TODO: history metric per day
     def generate_metric(self):
