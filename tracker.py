@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 from datetime import datetime, timezone
 import json
 import os
@@ -19,10 +20,10 @@ class Tracker(object):
     def __init__(self, tags: list[dict[str, Union[str, list[str]]]], transformer):
         self.fetcher = ArweaveFetcher(tags=tags, tags_transformer=transformer)
         os.makedirs(self.history_folder, exist_ok=True)
+        self.cursor = None
 
     def start_tracking(
         self,
-        min_block: int = None,
         batch_size: int = 100,
         keep_tracking: bool = False,
         keep_recent_count: int = None,
@@ -30,9 +31,9 @@ class Tracker(object):
     ):
         start_time = time.time()
         logger.info(
-            f"Starting tracking from block {min_block}, limit: {batch_size}, keep_tracking: {keep_tracking}"
+            f"Starting tracking limit: {batch_size}, keep_tracking: {keep_tracking}"
         )
-        while self._run_once(min_block, batch_size):
+        while self._run_once(batch_size):
             if not keep_tracking:
                 break
             if time.time() - start_time >= 1200:
@@ -51,9 +52,17 @@ class Tracker(object):
         except Exception as e:
             logger.error(f"Failed to generate metric: {e}")
 
-    def _run_once(self, min_block: int, limit: int):
+    def _run_once(self, limit: int):
+        last_tx = (
+            None
+            if not os.path.exists(self.transactions_path)
+            else json.loads(read_last_line(self.transactions_path))
+        )
+
+        min_block = last_tx["block_height"] if last_tx else None
+
         txs, has_next, cursor = self.fetcher.fetch_transactions(
-            cursor=self.fetcher.last_cursor, min_block=min_block, limit=limit
+            cursor=self.cursor, min_block=min_block, limit=limit
         )
 
         logger.info(
@@ -62,12 +71,19 @@ class Tracker(object):
         if len(txs) == 0:
             return False
 
+        # trim duplicated txs
+        txs = list(itertools.dropwhile(lambda tx: tx["id"] != last_tx["id"], txs))
+        if len(txs) <= 1:
+            # all txs are duplicated, try again with new cursor
+            self.cursor = cursor
+            return True
+        txs = txs[1:]
         ids = [tx["id"] for tx in txs]
         posts = asyncio.run(self.fetcher.batch_fetch_data(ids))
         logger.debug(f"Fetched {len(posts)} posts")
 
         # save after success
-        self.fetcher.last_cursor = cursor
+        self.cursor = cursor
         self.append_to_file(self.transactions_path, txs)
         self.append_to_file(self.posts_path, posts)
 
