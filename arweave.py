@@ -62,7 +62,7 @@ query {
         self, cursor: Optional[str], min_block: Optional[int], limit=100
     ) -> tuple[List[dict], bool, Optional[str]]:
         if min_block is None:
-            min_block = 900000
+            min_block = 935000
         logger.debug(f"start with cursor: {cursor}, min_block: {min_block}")
         result = self.execute(
             """
