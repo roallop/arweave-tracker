@@ -147,7 +147,7 @@ class Tracker(object):
 
         with open(self.posts_path, "r") as f:
             posts = [json.loads(line) for line in f.readlines()]
-            posts = filter(lambda p: "error" not in p, posts)
+            posts = list(filter(lambda p: "error" not in p, posts))
             feed = generate_feed(posts, False)
             mirror_feed = generate_feed(posts, True)
 
