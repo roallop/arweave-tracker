@@ -28,19 +28,21 @@ class Tracker(object):
         self.history_batch_size = history_batch_size
         os.makedirs(self.history_folder, exist_ok=True)
         self.cursor = None
+        self.batch_size = 100
+        self.last_tx = read_last_jsonline(self.transactions_path)
+
 
     def start_tracking(
         self,
-        batch_size: int = 100,
         keep_tracking: bool = False,
         keep_recent_count: int = None,
         generate_feed: bool = True,
     ):
         start_time = time.time()
         logger.info(
-            f"Starting tracking limit: {batch_size}, keep_tracking: {keep_tracking}"
+            f"Starting tracking keep_tracking: {keep_tracking}"
         )
-        while self._run_once(batch_size):
+        while self._run_once():
             if not keep_tracking:
                 break
             if time.time() - start_time >= 1200:
@@ -59,25 +61,25 @@ class Tracker(object):
         except Exception as e:
             logger.error(f"Failed to generate metric: {e}")
 
-    def _run_once(self, limit: int):
-        last_tx = read_last_jsonline(self.transactions_path)
+    def _run_once(self):
+        limit = self.batch_size
 
-        min_block = last_tx["block_height"] if last_tx else None
+        min_block = self.last_tx["block_height"] if self.last_tx else None
 
         txs, has_next, cursor = self.fetcher.fetch_transactions(
             cursor=self.cursor, min_block=min_block, limit=limit
         )
 
         logger.info(
-            f"Fetched {len(txs)} transactions, has_next: {has_next}, cursor: {cursor}, last_tx: {last_tx}"
+            f"Fetched {len(txs)} transactions, has_next: {has_next}, cursor: {cursor}, last_tx: {self.last_tx}"
         )
         if len(txs) == 0:
             return False
 
         # trim duplicated txs when
         # no cursor -> fetch by block height, which will have duplicated txs
-        if last_tx is not None and self.cursor is None:
-            txs = list(itertools.dropwhile(lambda t: t["id"] != last_tx["id"], txs))
+        if self.last_tx is not None and self.cursor is None:
+            txs = list(itertools.dropwhile(lambda t: t["id"] != self.last_tx["id"], txs))
             if len(txs) <= 1:
                 logger.info(f"No new transactions, cursor: {cursor}")
                 # all txs are duplicated, try again with new cursor
