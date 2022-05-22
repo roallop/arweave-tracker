@@ -1,5 +1,6 @@
 import asyncio
 import itertools
+import math
 from datetime import datetime, timezone
 import json
 import os
@@ -7,8 +8,10 @@ import time
 from typing import Union
 
 from feed import mirror_link_feed_filename
-from util import logger, read_last_jsonline
+from util import logger, read_last_jsonline, chunks
 from arweave import ArweaveFetcher
+
+GITHUB_FILE_LIMIT = 100 * 1024 * 1024  # 100 MB
 
 
 class Tracker(object):
@@ -31,7 +34,6 @@ class Tracker(object):
         self.batch_size = 100
         self.last_tx = read_last_jsonline(self.transactions_path)
 
-
     def start_tracking(
         self,
         keep_tracking: bool = False,
@@ -39,9 +41,7 @@ class Tracker(object):
         generate_feed: bool = True,
     ):
         start_time = time.time()
-        logger.info(
-            f"Starting tracking keep_tracking: {keep_tracking}"
-        )
+        logger.info(f"Starting tracking keep_tracking: {keep_tracking}")
         while self._run_once():
             if not keep_tracking:
                 break
@@ -61,6 +61,8 @@ class Tracker(object):
         except Exception as e:
             logger.error(f"Failed to generate metric: {e}")
 
+        self.split_large_history_files_if_needed()
+
     def _run_once(self):
         limit = self.batch_size
 
@@ -79,7 +81,9 @@ class Tracker(object):
         # trim duplicated txs when
         # no cursor -> fetch by block height, which will have duplicated txs
         if self.last_tx is not None and self.cursor is None:
-            txs = list(itertools.dropwhile(lambda t: t["id"] != self.last_tx["id"], txs))
+            txs = list(
+                itertools.dropwhile(lambda t: t["id"] != self.last_tx["id"], txs)
+            )
             if len(txs) <= 1:
                 logger.info(f"No new transactions, cursor: {cursor}")
                 # all txs are duplicated, try again with new cursor
@@ -110,6 +114,28 @@ class Tracker(object):
             self.append_to_file(key, self.posts_path, posts)
 
         return has_next
+
+    # make sure no files larger than 100MB(GitHub limit)
+    def split_large_history_files_if_needed(self):
+        for p in os.listdir(self.history_folder):
+            path = os.path.join(self.history_folder, p)
+            size = os.path.getsize(path)
+            if size >= GITHUB_FILE_LIMIT:
+                parts = math.ceil(size / GITHUB_FILE_LIMIT)
+                self._split_file(path, parts)
+
+    @staticmethod
+    def _split_file(path: str, chunk_count: int):
+        logger.info(f"Splitting file {path} to {chunk_count} parts")
+        with open(path, "r") as f:
+            total_lines = f.readlines()
+        chunk_size = math.ceil(len(total_lines) / chunk_count)
+        for i, lines in enumerate(chunks(total_lines, chunk_size)):
+            comps = path.split(".")
+            new_path = ".".join(comps[:-1]) + f".{i+1}.json"
+            with open(new_path, "w") as f:
+                f.writelines(lines)
+        os.remove(path)
 
     def truncate(self, interval: int = None, line_count: int = None):
         self._truncate(self.transactions_path, "block_timestamp", interval, line_count)
