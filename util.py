@@ -60,6 +60,11 @@ def test_read_last_line():
     assert json.loads(read_last_line("tests/line2.txt"))["foo"] == "bar"
 
 
+def lines_of_file(path: str) -> int:
+    with open(path, 'r') as f:
+        return len(f.readlines())
+
+
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):

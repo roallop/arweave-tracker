@@ -93,11 +93,8 @@ class Tracker(object):
 
         group_by_keys_txs = {}
         for tx in txs:
-            group_by_keys_txs.setdefault(
-                int(tx["block_height"] / self.history_batch_size)
-                * self.history_batch_size,
-                [],
-            ).append(tx)
+            key = tx["block_height"] // self.history_batch_size * self.history_batch_size
+            group_by_keys_txs.setdefault(key, []).append(tx)
 
         group_by_keys_posts = {}
         for key, txs in group_by_keys_txs.items():
@@ -130,10 +127,13 @@ class Tracker(object):
         with open(path, "r") as f:
             total_lines = f.readlines()
         chunk_size = math.ceil(len(total_lines) / chunk_count)
+        comps = path.split(".")
+        offset = 1
+        while os.path.exists(".".join(comps[:-1]) + f".{offset}.json"):
+            offset += 1
         for i, lines in enumerate(chunks(total_lines, chunk_size)):
-            comps = path.split(".")
-            new_path = ".".join(comps[:-1]) + f".{i+1}.json"
-            with open(new_path, "w") as f:
+            new_path = ".".join(comps[:-1]) + f".{i+offset}.json"
+            with open(new_path, "a") as f: # append to file
                 f.writelines(lines)
         os.remove(path)
 
